@@ -78,10 +78,11 @@ homekit_characteristic_t model        = HOMEKIT_CHARACTERISTIC_(MODEL,         "
 homekit_characteristic_t revision     = HOMEKIT_CHARACTERISTIC_(FIRMWARE_REVISION,  "0.0.0");
 
 void relay_write_1(bool on) {
-    gpio_write(relay_gpio_1, on ? 0 : 1);
+        gpio_write(relay_gpio_1, on ? 0 : 1);
 }
+
 void relay_write_2(bool on) {
-    gpio_write(relay_gpio_2, on ? 0 : 1);
+        gpio_write(relay_gpio_2, on ? 0 : 1);
 }
 
 void reset_configuration_task() {
@@ -105,18 +106,22 @@ void reset_configuration() {
 }
 
 homekit_characteristic_t lightbulb_on_1 = HOMEKIT_CHARACTERISTIC_(
-    ON, false, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(lightbulb_on_1_callback)
-);
+        ON, false, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(lightbulb_on_1_callback)
+        );
+
 homekit_characteristic_t lightbulb_on_2 = HOMEKIT_CHARACTERISTIC_(
-    ON, false, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(lightbulb_on_2_callback)
-);
+        ON, false, .callback=HOMEKIT_CHARACTERISTIC_CALLBACK(lightbulb_on_2_callback)
+        );
+
 
 
 
 void gpio_init() {
-    gpio_enable(relay_gpio_1, GPIO_OUTPUT);
-    relay_write_1(lightbulb_on_1.value.bool_value);
-    relay_write_2(lightbulb_on_2.value.bool_value);
+  gpio_enable(relay_gpio_1, GPIO_OUTPUT);
+  relay_write_1(lightbulb_on_1.value.bool_value);
+
+  gpio_enable(relay_gpio_2, GPIO_OUTPUT);
+  relay_write_2(lightbulb_on_2.value.bool_value);
     gpio_enable(MOTION_PIN,  GPIO_INPUT);
     gpio_enable(MOTION_PIN_2,  GPIO_INPUT);
     gpio_enable(MOTION_PIN_3,  GPIO_INPUT);
@@ -126,10 +131,11 @@ void gpio_init() {
 }
 
 void lightbulb_on_1_callback(homekit_characteristic_t *_ch, homekit_value_t on, void *context) {
-    relay_write_1(lightbulb_on_1.value.bool_value);
+        relay_write_1(lightbulb_on_1.value.bool_value);
 }
+
 void lightbulb_on_2_callback(homekit_characteristic_t *_ch, homekit_value_t on, void *context) {
-    relay_write_2(lightbulb_on_2.value.bool_value);
+        relay_write_2(lightbulb_on_2.value.bool_value);
 }
 
 void toggle_callback_1(bool high, void *context) {
@@ -137,6 +143,7 @@ void toggle_callback_1(bool high, void *context) {
         lightbulb_on_1.value.bool_value = !lightbulb_on_1.value.bool_value;
         relay_write_1(lightbulb_on_1.value.bool_value);
         homekit_characteristic_notify(&lightbulb_on_1, lightbulb_on_1.value);
+        reset_configuration();
 }
 
 //ContactSensor task
@@ -167,106 +174,119 @@ void motion_callback_4(bool high, void *context) {
     homekit_characteristic_notify(&occupancy_detected_4, occupancy_detected_4.value);
 }
 
-void light_identify(homekit_value_t _value) {
-    printf("Light identify\n");
-}
-
-void occupancy_identify(homekit_value_t _value) {
-    printf("occupancy_identify\n");
-}
-
-void door_identify(homekit_value_t _value) {
-    printf("door_identify\n");
+//ACCESSORIES IDENTIFY
+void BS53CLOSET_identify(homekit_value_t _value) {
+    printf("Multiple Acessory Identify\n");
 }
 
 
+//HOMEKIT ACCESSORIES SECTION
 homekit_accessory_t *accessories[] = {
-    HOMEKIT_ACCESSORY(.id=1, .category=homekit_accessory_category_switch, .services=(homekit_service_t*[]){
-            HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]){
-            HOMEKIT_CHARACTERISTIC(IDENTIFY, light_identify),
+          HOMEKIT_ACCESSORY(.id=1, .category=homekit_accessory_category_bridge, .services=(homekit_service_t*[]) {
+            HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]) {
             &name,
             &manufacturer,
             &serial,
             &model,
             &revision,
+            HOMEKIT_CHARACTERISTIC(IDENTIFY, BS53CLOSET_identify),
             NULL
         }),
-
-        HOMEKIT_SERVICE(LIGHTBULB, .primary=true, .characteristics=(homekit_characteristic_t*[]){
-	         HOMEKIT_CHARACTERISTIC(NAME, "Lâmpada 4"),
-	          &lightbulb_on_1,
-            &ota_trigger,
-            NULL
-        }),
-        HOMEKIT_SERVICE(LIGHTBULB, .characteristics=(homekit_characteristic_t*[]){
-           HOMEKIT_CHARACTERISTIC(NAME, "Closet dim"),
-            &lightbulb_on_2,
-            NULL
-          }),
-        NULL,
+        NULL
       }),
-
-      HOMEKIT_ACCESSORY(.id=2, .category=homekit_accessory_category_sensor, .services=(homekit_service_t*[]){
-              HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]) {
-                      HOMEKIT_CHARACTERISTIC(NAME, "Contact Sensor"),
-                      &manufacturer,
-                      &serial,
-                      &model,
-                      &revision,
-                      HOMEKIT_CHARACTERISTIC(IDENTIFY, door_identify),
+      HOMEKIT_ACCESSORY(.id=2, .category=homekit_accessory_category_switch, .services=(homekit_service_t*[]){
+              HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]){
+                      HOMEKIT_CHARACTERISTIC(NAME, "Lampada 1"),
+                      HOMEKIT_CHARACTERISTIC(IDENTIFY, BS53CLOSET_identify),
                       NULL
               }),
-              HOMEKIT_SERVICE(CONTACT_SENSOR, .characteristics=(homekit_characteristic_t*[]) {
-                      HOMEKIT_CHARACTERISTIC(NAME, "Contact Sensor"),
-                      &door_open_detected,
+              HOMEKIT_SERVICE(LIGHTBULB, .primary=true, .characteristics=(homekit_characteristic_t*[]){
+                      HOMEKIT_CHARACTERISTIC(NAME, "Lampada 1"),
+                      &lightbulb_on_1,
+                      &ota_trigger,
                       NULL
               }),
               NULL
       }),
 
-      HOMEKIT_ACCESSORY(.id=3, .category=homekit_accessory_category_sensor, .services=(homekit_service_t*[]) {
+      HOMEKIT_ACCESSORY(.id=3, .category=homekit_accessory_category_switch, .services=(homekit_service_t*[]){
+              HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]){
+                      HOMEKIT_CHARACTERISTIC(NAME, "Lampada 2"),
+                      HOMEKIT_CHARACTERISTIC(IDENTIFY, BS53CLOSET_identify),
+                      NULL
+              }),
+              HOMEKIT_SERVICE(LIGHTBULB, .primary=true, .characteristics=(homekit_characteristic_t*[]){
+                      HOMEKIT_CHARACTERISTIC(NAME, "Lampada 2"),
+                      &lightbulb_on_2,
+                      NULL
+              }),
+              NULL
+      }),
+
+      HOMEKIT_ACCESSORY(.id=4, .category=homekit_accessory_category_sensor, .services=(homekit_service_t*[]) {
           HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]) {
-              HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Sensor 12"),
-              &manufacturer,
-              &serial,
-              &model,
-              &revision,
-              HOMEKIT_CHARACTERISTIC(IDENTIFY, occupancy_identify),
+            HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Closet"),
+            HOMEKIT_CHARACTERISTIC(IDENTIFY, BS53CLOSET_identify),
               NULL
-  }),
-          HOMEKIT_SERVICE(OCCUPANCY_SENSOR, .characteristics=(homekit_characteristic_t*[]) {
-              HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Sensor"),
+          }),
+          HOMEKIT_SERVICE(OCCUPANCY_SENSOR, .primary=true, .characteristics=(homekit_characteristic_t*[]) {
+              HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Closet"),
               &occupancy_detected,
               NULL
           }),
-          HOMEKIT_SERVICE(OCCUPANCY_SENSOR, .characteristics=(homekit_characteristic_t*[]) {
-              HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Sensor_2"),
+          NULL
+      }),
+      HOMEKIT_ACCESSORY(.id=5, .category=homekit_accessory_category_sensor, .services=(homekit_service_t*[]) {
+          HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]) {
+            HOMEKIT_CHARACTERISTIC(NAME, "Occupancy ClosetS"),
+            HOMEKIT_CHARACTERISTIC(IDENTIFY, BS53CLOSET_identify),
+              NULL
+          }),
+          HOMEKIT_SERVICE(OCCUPANCY_SENSOR, .primary=true, .characteristics=(homekit_characteristic_t*[]) {
+              HOMEKIT_CHARACTERISTIC(NAME, "Occupancy ClosetS"),
               &occupancy_detected_2,
               NULL
           }),
           NULL
       }),
-      HOMEKIT_ACCESSORY(.id=4, .category=homekit_accessory_category_sensor, .services=(homekit_service_t*[]) {
+      HOMEKIT_ACCESSORY(.id=6, .category=homekit_accessory_category_sensor, .services=(homekit_service_t*[]) {
           HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]) {
-              HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Sensor 34"),
-              &manufacturer,
-              &serial,
-              &model,
-              &revision,
-              HOMEKIT_CHARACTERISTIC(IDENTIFY, occupancy_identify),
+            HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Banheiro"),
+            HOMEKIT_CHARACTERISTIC(IDENTIFY, BS53CLOSET_identify),
               NULL
-  }),
-          HOMEKIT_SERVICE(OCCUPANCY_SENSOR, .characteristics=(homekit_characteristic_t*[]) {
-              HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Sensor_3"),
+          }),
+          HOMEKIT_SERVICE(OCCUPANCY_SENSOR, .primary=true, .characteristics=(homekit_characteristic_t*[]) {
+              HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Banheiro"),
               &occupancy_detected_3,
               NULL
           }),
-          HOMEKIT_SERVICE(OCCUPANCY_SENSOR, .characteristics=(homekit_characteristic_t*[]) {
-              HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Sensor 4"),
+          NULL
+      }),
+      HOMEKIT_ACCESSORY(.id=7, .category=homekit_accessory_category_sensor, .services=(homekit_service_t*[]) {
+          HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]) {
+            HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Chuveiro"),
+            HOMEKIT_CHARACTERISTIC(IDENTIFY, BS53CLOSET_identify),
+              NULL
+          }),
+          HOMEKIT_SERVICE(OCCUPANCY_SENSOR, .primary=true, .characteristics=(homekit_characteristic_t*[]) {
+              HOMEKIT_CHARACTERISTIC(NAME, "Occupancy Chuveiro"),
               &occupancy_detected_4,
               NULL
           }),
           NULL
+      }),
+      HOMEKIT_ACCESSORY(.id=8, .category=homekit_accessory_category_sensor, .services=(homekit_service_t*[]) {
+              HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]) {
+                HOMEKIT_CHARACTERISTIC(NAME, "Porta Closet"),
+                HOMEKIT_CHARACTERISTIC(IDENTIFY, BS53CLOSET_identify),
+                      NULL
+              }),
+              HOMEKIT_SERVICE(CONTACT_SENSOR, .primary=true, .characteristics=(homekit_characteristic_t*[]) {
+                      HOMEKIT_CHARACTERISTIC(NAME, "Porta Closet"),
+                      &door_open_detected,
+                      NULL
+              }),
+              NULL
       }),
       NULL
   };
